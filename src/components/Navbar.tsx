@@ -1,10 +1,18 @@
 import Link from "next/link";
-import { LoginLink, RegisterLink } from "@kinde-oss/kinde-auth-nextjs/server";
+import {
+  LoginLink,
+  RegisterLink,
+  getKindeServerSession,
+  LogoutLink,
+} from "@kinde-oss/kinde-auth-nextjs/server";
 import { MaxWidthWrapper } from "./MaxWidthWrapper";
 import { buttonVariants } from "./ui/button";
 import { Sparkles } from "lucide-react";
 
 export const Navbar = () => {
+  const { getUser } = getKindeServerSession();
+  const user = getUser();
+
   return (
     <nav className="sticky h-14 inset-x-0 top-0 z-30 w-full border-b border-gray-200 bg-white/75 backdrop-blur-lg transition-all">
       <MaxWidthWrapper>
@@ -14,32 +22,43 @@ export const Navbar = () => {
           </Link>
           {/* TODO: add mobile navbar after auth */}
           <div className="hidden items-center space-x-4 sm:flex">
-            <>
-              <Link
-                href="/pricing"
+            {!user ? (
+              <>
+                <Link
+                  href="/pricing"
+                  className={buttonVariants({
+                    variant: "ghost",
+                    size: "sm",
+                  })}
+                >
+                  Pricing
+                </Link>
+                <LoginLink
+                  className={buttonVariants({
+                    variant: "ghost",
+                    size: "sm",
+                  })}
+                >
+                  Sign in
+                </LoginLink>
+                <RegisterLink
+                  className={buttonVariants({
+                    size: "sm",
+                  })}
+                >
+                  Get started <Sparkles className="ml-1.5 w-5 h-5" />
+                </RegisterLink>
+              </>
+            ) : (
+              <LogoutLink
                 className={buttonVariants({
                   variant: "ghost",
                   size: "sm",
                 })}
               >
-                Pricing
-              </Link>
-              <LoginLink
-                className={buttonVariants({
-                  variant: "ghost",
-                  size: "sm",
-                })}
-              >
-                Sign in
-              </LoginLink>
-              <RegisterLink
-                className={buttonVariants({
-                  size: "sm",
-                })}
-              >
-                Get started <Sparkles className="ml-1.5 w-5 h-5" />
-              </RegisterLink>
-            </>
+                Sign out
+              </LogoutLink>
+            )}
           </div>
         </div>
       </MaxWidthWrapper>
