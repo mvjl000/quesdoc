@@ -3,14 +3,21 @@
 import { format } from "date-fns";
 import { Ghost, MessageSquare, Plus, TrashIcon } from "lucide-react";
 import Link from "next/link";
-import { Button } from "../ui/button";
-import Skeleton from "react-loading-skeleton";
+import { Button } from "@/components/ui/button";
 import { trpc } from "@/app/_trpc/client";
+import { FileSkeleton } from "@/components/Skeletons";
 
 export const Files = () => {
   const { data: files, isLoading } = trpc.getUserFiles.useQuery();
 
-  if (isLoading) return <Skeleton height={100} className="my-2" count={3} />;
+  if (isLoading)
+    return (
+      <div className="mt-8 grid grid-cols-1 gap-6 divide-y divide-zinc-200 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from(Array(5).keys()).map((item) => (
+          <FileSkeleton key={item} />
+        ))}
+      </div>
+    );
 
   if (!files || files.length === 0)
     return (
