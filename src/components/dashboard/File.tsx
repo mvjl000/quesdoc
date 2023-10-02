@@ -2,9 +2,10 @@
 
 import { File as FileType } from "@prisma/client";
 import { format } from "date-fns";
-import { MessageSquare, Plus, TrashIcon } from "lucide-react";
+import { Loader2, MessageSquare, Plus, TrashIcon } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { trpc } from "@/app/_trpc/client";
 
 type FileProps = {
   // those types from prisma client are of type Date, from trpc their type is string
@@ -15,6 +16,15 @@ type FileProps = {
 };
 
 export const File = ({ data }: FileProps) => {
+  const utils = trpc.useContext();
+
+  const { mutate: deleteFile, isLoading: isDeletingLoading } =
+    trpc.deleteFile.useMutation({
+      onSuccess: () => {
+        utils.getUserFiles.invalidate();
+      },
+    });
+
   return (
     <li className="col-span-1 divide-y divide-gray-200 rounded-lg bg-white shadow transition hover:shadow-lg">
       <Link href={`/dashboard/${data.id}`} className="flex flex-col gap-2">
@@ -38,8 +48,18 @@ export const File = ({ data }: FileProps) => {
           <MessageSquare className="w-4 h-4" />
           14
         </div>
-        <Button size="sm" variant="destructive" className="w-full">
-          <TrashIcon className="w-4 h-4" />
+        <Button
+          size="sm"
+          variant="destructive"
+          className="w-full"
+          onClick={() => deleteFile({ id: data.id })}
+          disabled={isDeletingLoading}
+        >
+          {isDeletingLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <TrashIcon className="w-4 h-4" />
+          )}
         </Button>
       </div>
     </li>
