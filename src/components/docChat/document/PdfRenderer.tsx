@@ -26,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import SimpleBar from "simplebar-react";
-import { PdfFullscreen } from "@/components/docWithChat/PdfFullscreen";
+import { PdfFullscreen } from "@/components/docChat/document/PdfFullscreen";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
