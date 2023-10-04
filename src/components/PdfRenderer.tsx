@@ -34,11 +34,21 @@ type PdfRendererProps = {
   url: string;
 };
 
+const PdfLoader = () => (
+  <div className="flex justify-center">
+    <Loader2 className="my-24 w-6 h-6 animate-spin" />
+  </div>
+);
+
 export const PdfRenderer = ({ url }: PdfRendererProps) => {
   const [numPages, setNumPages] = useState<number | undefined>(undefined);
   const [currPage, setCurrPage] = useState(1);
   const [scale, setScale] = useState(1);
   const [rotation, setRotation] = useState(0);
+  // helps prevent flickering while changing scale
+  const [renderedScale, setRenderedScale] = useState<number | null>(null);
+
+  const isLoading = renderedScale !== scale;
 
   const { width, ref } = useResizeDetector();
   const { toast } = useToast();
@@ -178,11 +188,7 @@ export const PdfRenderer = ({ url }: PdfRendererProps) => {
         <SimpleBar autoHide={false} className="max-h-[calc(100vh-10rem)]">
           <div ref={ref}>
             <Document
-              loading={
-                <div className="flex justify-center">
-                  <Loader2 className="my-24 w-6 h-6 animate-spin" />
-                </div>
-              }
+              loading={<PdfLoader />}
               onLoadError={() => {
                 toast({
                   title: "Error loading PDF!",
@@ -196,11 +202,24 @@ export const PdfRenderer = ({ url }: PdfRendererProps) => {
               file={url}
               className="max-h-full"
             >
+              {isLoading && renderedScale ? (
+                <Page
+                  key={`@${renderedScale}`}
+                  width={width ? width : 1}
+                  pageNumber={currPage}
+                  scale={scale}
+                  rotate={rotation}
+                />
+              ) : null}
               <Page
+                key={`@${scale}`}
                 width={width ? width : 1}
                 pageNumber={currPage}
                 scale={scale}
                 rotate={rotation}
+                onRenderSuccess={() => setRenderedScale(scale)}
+                className={cn(isLoading ? "hidden" : "")}
+                loading={<PdfLoader />}
               />
             </Document>
           </div>
