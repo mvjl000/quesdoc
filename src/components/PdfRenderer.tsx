@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import SimpleBar from "simplebar-react";
+import { PdfFullscreen } from "@/components/PdfFullscreen";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
@@ -170,11 +171,12 @@ export const PdfRenderer = ({ url }: PdfRendererProps) => {
           >
             <CornerUpRight className="w-4 h-4" />
           </Button>
+          <PdfFullscreen fileUrl={url} />
         </div>
       </div>
       <div className="flex-1 w-full max-h-screen">
         <SimpleBar autoHide={false} className="max-h-[calc(100vh-10rem)]">
-          <div ref={ref} className="">
+          <div ref={ref}>
             <Document
               loading={
                 <div className="flex justify-center">
