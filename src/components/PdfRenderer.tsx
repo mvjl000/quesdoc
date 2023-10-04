@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Loader2, SearchIcon } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  CornerUpRight,
+  Loader2,
+  SearchIcon,
+} from "lucide-react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
@@ -31,6 +37,7 @@ export const PdfRenderer = ({ url }: PdfRendererProps) => {
   const [numPages, setNumPages] = useState<number | undefined>(undefined);
   const [currPage, setCurrPage] = useState(1);
   const [scale, setScale] = useState(1);
+  const [rotation, setRotation] = useState(0);
 
   const { width, ref } = useResizeDetector();
   const { toast } = useToast();
@@ -155,6 +162,14 @@ export const PdfRenderer = ({ url }: PdfRendererProps) => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <Button
+            aria-label="rotate 90 degrees"
+            variant="ghost"
+            onClick={() => setRotation(rotation + 90)}
+          >
+            <CornerUpRight className="w-4 h-4" />
+          </Button>
         </div>
       </div>
       <div className="flex-1 w-full max-h-screen">
@@ -183,6 +198,7 @@ export const PdfRenderer = ({ url }: PdfRendererProps) => {
                 width={width ? width : 1}
                 pageNumber={currPage}
                 scale={scale}
+                rotate={rotation}
               />
             </Document>
           </div>
