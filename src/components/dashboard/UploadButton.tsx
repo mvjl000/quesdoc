@@ -5,7 +5,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
 import Dropzone, { DropEvent, FileRejection } from "react-dropzone";
-import { CloudIcon, FileIcon } from "lucide-react";
+import { CloudIcon, FileIcon, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useUploadThing } from "@/lib/uploadthing";
 import { useToast } from "@/components/ui/use-toast";
@@ -123,8 +123,17 @@ const UploadDropzone = () => {
                 <div className="w-full mt-4 max-w-xs mx-auto">
                   <Progress
                     value={uploadProgress}
+                    indicatorColor={
+                      uploadProgress === 100 ? "bg-green-500" : ""
+                    }
                     className="h-1 w-full bg-zinc-200"
                   />
+                  {uploadProgress === 100 ? (
+                    <div className="flex gap-1 justify-center items-center text-sm text-zinc-700 text-center pt-2">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Redirecting...
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
               <input
