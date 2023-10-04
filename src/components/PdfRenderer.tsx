@@ -9,6 +9,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { useResizeDetector } from "react-resize-detector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { cn } from "@/lib/utils";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
@@ -22,23 +26,56 @@ export const PdfRenderer = ({ url }: PdfRendererProps) => {
   const { width, ref } = useResizeDetector();
   const { toast } = useToast();
 
+  const formSchema = z.object({
+    page: z
+      .string()
+      .refine((num) => Number(num) > 0 && Number(num) <= numPages!),
+  });
+
+  type FormSchemaType = z.infer<typeof formSchema>;
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+  } = useForm<FormSchemaType>({
+    defaultValues: {
+      page: "1",
+    },
+    resolver: zodResolver(formSchema),
+  });
+
   const PREV_PAGE_DISABLED = currPage <= 1;
   const NEXT_PAGE_DISABLED =
     typeof numPages === "number" && currPage >= numPages;
 
   const handleChangePage = (direction: "prev" | "next") => {
     switch (direction) {
-      case "prev":
+      case "prev": {
         if (PREV_PAGE_DISABLED) return;
 
-        setCurrPage(currPage - 1);
+        const value = currPage - 1;
+
+        setCurrPage(value);
+        setValue("page", String(value));
         break;
-      case "next":
+      }
+      case "next": {
         if (NEXT_PAGE_DISABLED) return;
 
-        setCurrPage(currPage + 1);
+        const value = currPage + 1;
+
+        setCurrPage(value);
+        setValue("page", String(value));
         break;
+      }
     }
+  };
+
+  const handlePageSubmit = ({ page }: FormSchemaType) => {
+    setCurrPage(Number(page));
+    setValue("page", String(page));
   };
 
   return (
@@ -64,7 +101,18 @@ export const PdfRenderer = ({ url }: PdfRendererProps) => {
           </Button>
 
           <div className="flex items-center gap-1.5">
-            <Input className="w-12 h-8" value={currPage} />
+            <Input
+              {...register("page")}
+              className={cn(
+                "w-12 h-8",
+                errors.page && "focus-visible:ring-red-500"
+              )}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  handleSubmit(handlePageSubmit)();
+                }
+              }}
+            />
             <p className="text-zinc-700 text-sm space-x-1">
               <span>/</span>
               <span>{numPages ?? "x"}</span>
