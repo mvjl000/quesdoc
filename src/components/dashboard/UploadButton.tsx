@@ -4,13 +4,38 @@ import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
-import Dropzone from "react-dropzone";
+import Dropzone, { DropEvent, FileRejection } from "react-dropzone";
 import { CloudIcon, FileIcon } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { useUploadThing } from "@/lib/uploadthing";
+import { useToast } from "@/components/ui/use-toast";
+import { trpc } from "@/app/_trpc/client";
+import { useRouter } from "next/navigation";
+
+type onDrop =
+  | (<T extends File>(
+      acceptedFiles: T[],
+      fileRejections: FileRejection[],
+      event: DropEvent
+    ) => void)
+  | undefined;
 
 const UploadDropzone = () => {
-  const [isUploading, setIsUploading] = useState(true);
+  const router = useRouter();
+
+  const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+
+  const { toast } = useToast();
+  const { startUpload } = useUploadThing("pdfUploader");
+
+  const { mutate: startPolling } = trpc.getFile.useMutation({
+    onSuccess: (file) => {
+      router.push(`/dashboard/${file.id}`);
+    },
+    retry: true,
+    retryDelay: 500,
+  });
 
   const startSimulatedProgress = () => {
     setUploadProgress(0);
@@ -29,15 +54,38 @@ const UploadDropzone = () => {
     return interval;
   };
 
-  const handleOnDrop = async () => {
+  const handleOnDrop: onDrop = async (file) => {
     setIsUploading(true);
 
     const progressInterval = startSimulatedProgress();
 
     // file upload here
+    const res = await startUpload(file);
+
+    if (!res) {
+      return toast({
+        title: "Something went wrong res",
+        description: "Please try again later",
+        variant: "destructive",
+      });
+    }
+
+    const [fileResponse] = res;
+
+    const key = fileResponse.key;
+
+    if (!key) {
+      return toast({
+        title: "Something went wrong key",
+        description: "Please try again later",
+        variant: "destructive",
+      });
+    }
 
     clearInterval(progressInterval);
     setUploadProgress(100);
+
+    startPolling({ key });
   };
 
   return (
@@ -79,6 +127,12 @@ const UploadDropzone = () => {
                   />
                 </div>
               ) : null}
+              <input
+                id="dropzone-file"
+                type="file"
+                className="hidden"
+                {...getInputProps()}
+              />
             </label>
           </div>
         </div>
