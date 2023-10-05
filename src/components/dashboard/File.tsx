@@ -1,18 +1,15 @@
 "use client";
 
-import { File as FileType } from "@prisma/client";
 import { format } from "date-fns";
 import { Loader2, MessageSquare, Plus, TrashIcon } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/app/_trpc/client";
+import { File as FileType } from "@/types/file";
 
 type FileProps = {
   // those types from prisma client are of type Date, from trpc their type is string
-  data: Omit<FileType, "createdAt" | "updatedAt"> & {
-    createdAt: string;
-    updatedAt: string;
-  };
+  data: FileType;
 };
 
 export const File = ({ data }: FileProps) => {
