@@ -5,14 +5,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DEFAULT_INFINITE_QUERY_LIMIT } from "@/config/infinite-query";
 import { Loader2, MessageSquare } from "lucide-react";
 import { Message } from "@/components/docChat/chat/Message";
-import { useContext } from "react";
+import { useContext, useEffect, useRef } from "react";
 import { ChatContext } from "@/context/ChatContext";
+import { useIntersection } from "@mantine/hooks";
 
 type MessagesProps = {
   fileId: string;
 };
 
 export const Messages = ({ fileId }: MessagesProps) => {
+  const lastMessageRef = useRef<HTMLDivElement>(null);
   const { isLoading: isAiThinking } = useContext(ChatContext);
 
   const { data, isLoading, fetchNextPage } =
@@ -23,6 +25,17 @@ export const Messages = ({ fileId }: MessagesProps) => {
         keepPreviousData: true,
       }
     );
+
+  const { ref, entry } = useIntersection({
+    root: lastMessageRef.current,
+    threshold: 1,
+  });
+
+  useEffect(() => {
+    if (entry?.isIntersecting) {
+      fetchNextPage();
+    }
+  }, [entry, fetchNextPage]);
 
   const messages = data?.pages.flatMap((page) => page.messages);
 
@@ -54,6 +67,7 @@ export const Messages = ({ fileId }: MessagesProps) => {
             return (
               <Message
                 key={message.id}
+                ref={ref}
                 isNextMessageSamePerson={isNextMessageSamePerson}
                 message={message}
               />
@@ -69,7 +83,6 @@ export const Messages = ({ fileId }: MessagesProps) => {
         })
       ) : isLoading ? (
         <div className="w-full flex flex-col gap-2">
-          <p>Skeleton loaders go here</p>
           <Skeleton className="h-16" />
           <Skeleton className="h-16" />
           <Skeleton className="h-16" />
