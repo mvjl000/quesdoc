@@ -3,39 +3,59 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { trpc } from "@/app/_trpc/client";
 import { Loader2 } from "lucide-react";
+import { Suspense } from "react";
+
+const AuthCallbackContent = () => {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+
+    const origin = searchParams.get("origin");
+
+    // runs on page load
+    trpc.authCallback.useQuery(undefined, {
+        onSuccess: ({ success }) => {
+            if (success) {
+                // user is synced to the db
+                router.push(origin ? `/${origin}` : "/dashboard");
+            }
+        },
+        onError: (err) => {
+            if (err.data?.code === "UNAUTHORIZED") {
+                router.push("/sign-in");
+            }
+        },
+        retry: true,
+        retryDelay: 500,
+    });
+
+    return (
+        <div className="w-full mt-24 flex justify-center">
+            <div className="flex flex-col items-center gap-2">
+                <Loader2 className="w-8 h-8 animate-spin text-zinc-800" />
+                <p className="font-semibold text-xl">
+                    Setting up your account...
+                </p>
+                <p>You will be redirected automatically.</p>
+            </div>
+        </div>
+    );
+};
 
 const Page = () => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const origin = searchParams.get("origin");
-
-  // runs on page load
-  trpc.authCallback.useQuery(undefined, {
-    onSuccess: ({ success }) => {
-      if (success) {
-        // user is synced to the db
-        router.push(origin ? `/${origin}` : "/dashboard");
-      }
-    },
-    onError: (err) => {
-      if (err.data?.code === "UNAUTHORIZED") {
-        router.push("/sign-in");
-      }
-    },
-    retry: true,
-    retryDelay: 500,
-  });
-
-  return (
-    <div className="w-full mt-24 flex justify-center">
-      <div className="flex flex-col items-center gap-2">
-        <Loader2 className="w-8 h-8 animate-spin text-zinc-800" />
-        <p className="font-semibold text-xl">Setting up your account...</p>
-        <p>You will be redirected automatically.</p>
-      </div>
-    </div>
-  );
+    return (
+        <Suspense
+            fallback={
+                <div className="w-full mt-24 flex justify-center">
+                    <div className="flex flex-col items-center gap-2">
+                        <Loader2 className="w-8 h-8 animate-spin text-zinc-800" />
+                        <p className="font-semibold text-xl">Loading...</p>
+                    </div>
+                </div>
+            }
+        >
+            <AuthCallbackContent />
+        </Suspense>
+    );
 };
 
 export default Page;
