@@ -59,21 +59,21 @@
         "tailwindcss": "latest",
         "tailwindcss-animate": "^1.0.7",
         "uploadthing": "^5.7.0",
-        "zod": "^3.22.2"
+        "zod": "^3.22.2",
+        "typescript": "latest",
+        "@types/react": "latest",
+        "@types/node": "latest"
     },
     "overrides": {
         "@browserbasehq/stagehand": {
             "openai": "$openai"
         }
     },
-    "devDependencies": {
-        "@types/node": "latest",
-        "@types/pdf-parse": "^1.1.4",
-        "@types/react": "latest",
-        "@types/react-dom": "latest",
-        "eslint": "latest",
-        "eslint-config-next": "latest",
-        "prisma": "^5.3.1",
-        "typescript": "latest"
-    }
+     "devDependencies": {
+         "@types/pdf-parse": "^1.1.4",
+         "@types/react-dom": "latest",
+         "eslint": "latest",
+         "eslint-config-next": "latest",
+         "prisma": "^5.3.1"
+     }
 }
