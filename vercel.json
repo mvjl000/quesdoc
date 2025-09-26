@@ -1,0 +1,8 @@
+{
+    "buildCommand": "npm install --legacy-peer-deps && npm run build",
+    "functions": {
+        "app/api/**/*.ts": {
+            "runtime": "nodejs18.x"
+        }
+    }
+}
