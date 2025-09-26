@@ -6,147 +6,149 @@ import { z } from "zod";
 import { DEFAULT_INFINITE_QUERY_LIMIT } from "@/config/infinite-query";
 
 export const appRouter = router({
-  authCallback: publicProcedure.query(async () => {
-    const { getUser } = getKindeServerSession();
+    authCallback: publicProcedure.query(async () => {
+        const { getUser } = getKindeServerSession();
 
-    const user = getUser();
+        const user = getUser();
 
-    if (!user.id || !user.email) throw new TRPCError({ code: "UNAUTHORIZED" });
+        if (!user.id || !user.email)
+            throw new TRPCError({ code: "UNAUTHORIZED" });
 
-    const dbUser = await db.user.findFirst({
-      where: {
-        id: user.id,
-      },
-    });
+        const dbUser = await db.user.findFirst({
+            where: {
+                id: user.id,
+            },
+        });
 
-    if (!dbUser) {
-      // first-time user
-      await db.user.create({
-        data: {
-          id: user.id,
-          email: user.email,
-        },
-      });
-    }
+        if (!dbUser) {
+            // first-time user
+            await db.user.create({
+                data: {
+                    id: user.id,
+                    email: user.email,
+                },
+            });
+        }
 
-    return { success: true };
-  }),
-  getUserFiles: privateProcedure.query(async ({ ctx }) => {
-    const { userId } = ctx;
-
-    return await db.file.findMany({
-      where: {
-        userId,
-      },
-    });
-  }),
-  getFile: privateProcedure
-    .input(z.object({ key: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      const { userId } = ctx;
-
-      const file = await db.file.findFirst({
-        where: {
-          key: input.key,
-          userId,
-        },
-      });
-
-      if (!file) throw new TRPCError({ code: "NOT_FOUND" });
-
-      return file;
+        return { success: true };
     }),
-  getFileUploadStatus: privateProcedure
-    .input(z.object({ fileId: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const { fileId } = input;
-      const { userId } = ctx;
+    getUserFiles: privateProcedure.query(async ({ ctx }) => {
+        const { userId } = ctx;
 
-      const file = await db.file.findFirst({
-        where: {
-          id: fileId,
-          userId,
-        },
-      });
-
-      if (!file) return { status: "PENDING" as const };
-
-      return { status: file.uploadStatus };
+        return await db.file.findMany({
+            where: {
+                userId,
+            },
+        });
     }),
-  getFileMessages: privateProcedure
-    .input(
-      z.object({
-        limit: z.number().min(1).max(100).nullish(),
-        cursor: z.string().nullish(),
-        fileId: z.string(),
-      })
-    )
-    .query(async ({ ctx, input }) => {
-      const { userId } = ctx;
-      const { fileId, cursor } = input;
-      const limit = input.limit ?? DEFAULT_INFINITE_QUERY_LIMIT;
+    getFile: privateProcedure
+        .input(z.object({ key: z.string() }))
+        .mutation(async ({ ctx, input }) => {
+            const { userId } = ctx;
 
-      const file = await db.file.findFirst({
-        where: {
-          id: fileId,
-          userId,
-        },
-      });
+            const file = await db.file.findFirst({
+                where: {
+                    key: input.key,
+                    userId,
+                },
+            });
 
-      if (!file) throw new TRPCError({ code: "NOT_FOUND" });
+            if (!file) throw new TRPCError({ code: "NOT_FOUND" });
 
-      const messages = await db.message.findMany({
-        take: limit + 1,
-        where: {
-          fileId,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-        cursor: cursor ? { id: cursor } : undefined,
-        select: {
-          id: true,
-          isUserMessage: true,
-          createdAt: true,
-          text: true,
-        },
-      });
+            return file;
+        }),
+    getFileUploadStatus: privateProcedure
+        .input(z.object({ fileId: z.string() }))
+        .query(async ({ ctx, input }) => {
+            const { fileId } = input;
+            const { userId } = ctx;
 
-      let nextCursor: typeof cursor | undefined = undefined;
+            const file = await db.file.findFirst({
+                where: {
+                    id: fileId,
+                    userId,
+                },
+            });
+            console.log("FILE>>>>>>", file);
 
-      if (messages.length > limit) {
-        const nextItem = messages.pop();
+            if (!file) return { status: "PENDING" as const };
 
-        nextCursor = nextItem?.id;
-      }
+            return { status: file.uploadStatus };
+        }),
+    getFileMessages: privateProcedure
+        .input(
+            z.object({
+                limit: z.number().min(1).max(100).nullish(),
+                cursor: z.string().nullish(),
+                fileId: z.string(),
+            })
+        )
+        .query(async ({ ctx, input }) => {
+            const { userId } = ctx;
+            const { fileId, cursor } = input;
+            const limit = input.limit ?? DEFAULT_INFINITE_QUERY_LIMIT;
 
-      return {
-        messages,
-        nextCursor,
-      };
-    }),
-  deleteFile: privateProcedure
-    .input(z.object({ id: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      const { userId } = ctx;
+            const file = await db.file.findFirst({
+                where: {
+                    id: fileId,
+                    userId,
+                },
+            });
 
-      const file = await db.file.findFirst({
-        where: {
-          id: input.id,
-          userId,
-        },
-      });
+            if (!file) throw new TRPCError({ code: "NOT_FOUND" });
 
-      if (!file) throw new TRPCError({ code: "NOT_FOUND" });
+            const messages = await db.message.findMany({
+                take: limit + 1,
+                where: {
+                    fileId,
+                },
+                orderBy: {
+                    createdAt: "desc",
+                },
+                cursor: cursor ? { id: cursor } : undefined,
+                select: {
+                    id: true,
+                    isUserMessage: true,
+                    createdAt: true,
+                    text: true,
+                },
+            });
 
-      await db.file.delete({
-        where: {
-          id: input.id,
-        },
-      });
+            let nextCursor: typeof cursor | undefined = undefined;
 
-      return file;
-    }),
+            if (messages.length > limit) {
+                const nextItem = messages.pop();
+
+                nextCursor = nextItem?.id;
+            }
+
+            return {
+                messages,
+                nextCursor,
+            };
+        }),
+    deleteFile: privateProcedure
+        .input(z.object({ id: z.string() }))
+        .mutation(async ({ ctx, input }) => {
+            const { userId } = ctx;
+
+            const file = await db.file.findFirst({
+                where: {
+                    id: input.id,
+                    userId,
+                },
+            });
+
+            if (!file) throw new TRPCError({ code: "NOT_FOUND" });
+
+            await db.file.delete({
+                where: {
+                    id: input.id,
+                },
+            });
+
+            return file;
+        }),
 });
 
 export type AppRouter = typeof appRouter;
